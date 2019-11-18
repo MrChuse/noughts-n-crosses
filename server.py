@@ -59,8 +59,8 @@ def make_move_message():
     return make_message(TYPE_MOVE, None)
 
 
-def make_game_is_over_message():
-    return make_message(TYPE_GAME_OVER, None)
+def make_game_is_over_message(winner):
+    return make_message(TYPE_GAME_OVER, f"Game is over, winner is {'X' if winner else 'O'}")
 
 
 msg_len, msg = make_field_message(g)
@@ -79,7 +79,7 @@ while not g.is_over():
 
             if msg_type != TYPE_MOVE:
                 raise Exception()
-            print(g.make_a_move(crosses_move, msg['x'], msg['y']))
+            winner = g.make_a_move(crosses_move, msg['x'], msg['y'])
         except:
             continue
         break
@@ -92,8 +92,8 @@ while not g.is_over():
     clients = clients[1], clients[0]
     crosses_move = not crosses_move
 
-print(11111)
-msg_len, msg = make_game_is_over_message()
+
+msg_len, msg = make_game_is_over_message(winner)
 
 send_message(client1, msg_len, msg)
 send_message(client2, msg_len, msg)

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import socket
 import argparse
-
-from net import TYPE_FIELD,TYPE_GAME_OVER, TYPE_MOVE, recv_message, make_message, send_message
+import logging
 
 from utils import print_field
+
+from network import Client
 
 parser = argparse.ArgumentParser(description='Connect to game server')
 
@@ -24,34 +24,36 @@ parser.add_argument(
     help='Port to connect to'
 )
 
+parser.add_argument(
+    '-v',
+    '--verbose',
+    action='store_true',
+    help='Be verbose'
+)
+
 args = parser.parse_args()
 
-sock = socket.socket()
-sock.connect((args.host, args.port))
-
-file = None
-
-def make_move_message(x, y):
-    return make_message(TYPE_MOVE, {'x': x, 'y': y})
+logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
 
-while True:
-    msg_type, msg = recv_message(sock)
+def make_move(crosses_turn):
+    while True:
+        try:
+            return tuple(map(int, input('Enter move: ').split()))
+        except Exception as e:
+            print(f'Invalid move: {e}')
 
-    if msg_type == TYPE_FIELD:
-        print_field(msg)
-    elif msg_type == TYPE_MOVE:
-        while True:
-            try:
-                x, y = map(int, input('Enter move: ').split())
-            except Exception as e:
-                print(f'Invalid move: {e}')
-                continue
-            break
 
-        send_message(sock, *make_move_message(x, y))
-    elif msg_type == TYPE_GAME_OVER:
-        print(msg)
-        break
+def game_over(crosses_won):
+    if crosses_won is None:
+        print('Draw')
+    else:
+        print('Winner:', 'crosses' if crosses_won else 'noughts')
 
-sock.close()
+
+client = Client(args.host, args.port)
+client.on_field_received = print_field
+client.on_move_required = make_move
+client.on_game_over = game_over
+
+client.start()

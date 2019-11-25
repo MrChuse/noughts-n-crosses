@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
-import socket
 import argparse
 
-from core import TheGame
-from net import make_message, send_message, recv_message, TYPE_FIELD, TYPE_GAME_OVER, TYPE_MOVE
+from network import Server
+
+import signal
+
+import logging
+
 
 parser = argparse.ArgumentParser(description='Start game server')
 parser.add_argument(
@@ -38,67 +41,30 @@ parser.add_argument(
     help='Port to listen to'
 )
 
+parser.add_argument(
+    '-v',
+    '--verbose',
+    action='store_true',
+    help='Be verbose'
+)
+
 args = parser.parse_args()
 
-g = TheGame(args.field_size, args.row_length)
-
-sock = socket.create_server((args.host, args.port))
-
-print('Waiting for client #1')
-client1, addr1 = sock.accept()
-
-print('Waiting for client #2')
-client2, addr2 = sock.accept()
+logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
 
-def make_field_message(g):
-    return make_message(TYPE_FIELD, g.get_field())
+server = Server(
+    args.field_size,
+    args.row_length,
+    args.host,
+    args.port
+)
 
 
-def make_move_message():
-    return make_message(TYPE_MOVE, None)
+def signal_handler(sig, frame):
+    server.stop()
 
 
-def make_game_is_over_message():
-    return make_message(TYPE_GAME_OVER, None)
+signal.signal(signal.SIGINT, signal_handler)
 
-
-msg_len, msg = make_field_message(g)
-
-send_message(client1, msg_len, msg)
-send_message(client2, msg_len, msg)
-
-clients = client1, client2
-crosses_move = True
-
-while not g.is_over():
-    while True:
-        try:
-            send_message(clients[0], *make_move_message())
-            msg_type, msg = recv_message(clients[0])
-
-            if msg_type != TYPE_MOVE:
-                raise Exception()
-            print(g.make_a_move(crosses_move, msg['x'], msg['y']))
-        except:
-            continue
-        break
-
-    msg_len, msg = make_field_message(g)
-
-    send_message(client1, msg_len, msg)
-    send_message(client2, msg_len, msg)
-
-    clients = clients[1], clients[0]
-    crosses_move = not crosses_move
-
-print(11111)
-msg_len, msg = make_game_is_over_message()
-
-send_message(client1, msg_len, msg)
-send_message(client2, msg_len, msg)
-
-client1.close()
-client2.close()
-
-sock.close()
+server.start()

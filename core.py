@@ -78,7 +78,7 @@ class TheGame:
             return crosses
 
     def is_over(self):
-        return self.crosses_turn is None or self.cells_left == 0
+        return self.crosses_move is None or self.cells_left == 0
 
     def crosses_move(self, x, y):
         return self.make_a_move(True, x, y)

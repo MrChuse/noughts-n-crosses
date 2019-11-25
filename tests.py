@@ -51,10 +51,6 @@ class CoreTests(unittest.TestCase):
                 winner if i + 1 == len(moves) else None,
                 g.make_a_move(crosses_move, x, y)
             )
-            self.assertEqual(
-                True if i + 1 == len(moves) else False,
-                g.is_over()
-            )
             crosses_move = not crosses_move
 
     def test_play_game_3_3(self):

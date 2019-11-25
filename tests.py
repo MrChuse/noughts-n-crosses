@@ -1,5 +1,8 @@
 import unittest
+import logging
 from core import TheGame, CellOccupiedError, NotYourTurnError
+
+from network import Client, Server
 
 
 class CoreTests(unittest.TestCase):
@@ -100,5 +103,33 @@ class CoreTests(unittest.TestCase):
         )
 
 
+class NetworkTests(unittest.TestCase):
+    def test_play_match(self):
+        server = Server()
+        server.start(False)
+
+        client1 = Client('localhost', 8081)
+        client2 = Client('localhost', 8081)
+
+        client1_moves = [(1, 1), (2, 2), (3, 3)]
+        client2_moves = [(3, 1), (3, 2)]
+
+        client1.on_move_required = lambda ct: (client1_moves if ct else client2_moves).pop(0)
+        client1.on_game_over = lambda winner: self.assertTrue(winner)
+
+        client2.on_move_required = lambda ct: (client1_moves if ct else client2_moves).pop(0)
+        client2.on_game_over = lambda winner: self.assertTrue(winner)
+
+        client1.start(False)
+        client2.start(False)
+
+        client1.wait()
+        client2.wait()
+
+        server.stop()
+
+
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     unittest.main()
+

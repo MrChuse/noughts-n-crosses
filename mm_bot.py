@@ -41,9 +41,10 @@ settings = None
 
 def game_start(msg):
     global field, settings
-    print('game_start', msg)
+    #print('game_start', msg)
     field = msg[0]
     settings = msg[1]
+    print_field(field)
 
 def save_field(field_):
     global field
@@ -64,7 +65,7 @@ def get_possible_moves(field):
     for i in range(len(field)):
         for j in range(len(field[i])):
             if field[i][j] == None:
-                if touching((i, j), field):
+                #if touching((i, j), field):
                     pos.append((i, j))
     return pos
 
@@ -119,7 +120,7 @@ def check_win(row_len, field):
         return 0
     return None #if didn't find a line anywhere and there are empty cells
 
-def minimax(player, row_len, field, depth):
+def minimax(player, row_len, field, depth, alpha=-1000000, beta=1000000):
     ch_win = check_win(row_len, field)
     #print(ch_win, 'ch_win')
     if ch_win is not None:
@@ -130,9 +131,18 @@ def minimax(player, row_len, field, depth):
     possible_moves = get_possible_moves(field)
     for move in possible_moves:
         field[move[0]][move[1]] = player
-        ret_move, score = minimax(not player, row_len, field, depth+1)
+        ret_move, score = minimax(not player, row_len, field, depth+1, alpha, beta)
 
-        if (player and score > best_score) or ((not player and score < best_score)):
+        if player:
+            if score > alpha:
+                alpha = score
+            if score > best_score:
+                best_score = score
+                best_move = move
+        else:
+            if score < beta:
+                beta = score
+            if score < best_score:
                 best_score = score
                 best_move = move
 
@@ -141,7 +151,7 @@ def minimax(player, row_len, field, depth):
 
 def get_next_move(field):
     global settings
-    print((settings, 'settings'))
+    #print((settings, 'settings'))
     possible_moves = get_possible_moves(field)
     if len(possible_moves) == 0:
         return random_move(field)
@@ -152,7 +162,7 @@ def get_next_move(field):
 def make_move(crosses_turn):
     global field
     move = get_next_move(field)
-    print((move, 'move'))
+    #print((move, 'move'))
     return move
 
 

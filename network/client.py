@@ -3,7 +3,7 @@
 import socket
 from threading import Thread
 
-from .common import TYPE_FIELD,TYPE_GAME_OVER, TYPE_MOVE, recv_message, make_message, send_message
+from .common import TYPE_START, TYPE_FIELD,TYPE_GAME_OVER, TYPE_MOVE, recv_message, make_message, send_message
 
 import logging
 
@@ -20,9 +20,13 @@ class Client:
         self.host = host
         self.port = port
 
+        self.on_start_received = self.clb_on_start_received
         self.on_field_received = self.clb_on_field_received
         self.on_move_required = self.clb_on_move_required
         self.on_game_over = self.clb_on_game_over
+
+    def clb_on_start_received(self, msg):
+        self.logger.debug(msg)
 
     def clb_on_field_received(self, field):
         self.logger.debug(f'Field: {field}')
@@ -41,8 +45,9 @@ class Client:
         try:
             while True:
                 msg_type, msg = recv_message(sock)
-
-                if msg_type == TYPE_FIELD:
+                if msg_type == TYPE_START:
+                    self.on_start_received(msg)
+                elif msg_type == TYPE_FIELD:
                     self.on_field_received(msg)
                 elif msg_type == TYPE_MOVE:
                     x, y = self.on_move_required(msg)

@@ -6,16 +6,17 @@ import logging
 from threading import Thread
 
 from core import TheGame
-from network.common import make_message, send_message, recv_message, TYPE_FIELD, TYPE_GAME_OVER, TYPE_MOVE
+from network.common import make_message, send_message, recv_message, TYPE_START, TYPE_FIELD, TYPE_GAME_OVER, TYPE_MOVE
 
 
 def make_field_message(g):
     return make_message(TYPE_FIELD, g.get_field())
 
+def make_start_message(g, settings):
+    return make_message(TYPE_START, (g.get_field(), settings))
 
 def make_move_message(crosses_turn):
     return make_message(TYPE_MOVE, crosses_turn)
-
 
 def make_game_is_over_message(winner):
     return make_message(TYPE_GAME_OVER, winner)
@@ -33,9 +34,10 @@ class Server:
 
     def play_match(self, client1, client2):
         g = TheGame(self.field_size, self.row_length)
-        msg_len, msg = make_field_message(g)
-
+        msg_len, msg = make_start_message(g, (True, self.field_size, self.row_length)) #for players to know the rules and their mark
+        print(msg_len)
         send_message(client1, msg_len, msg)
+        msg_len, msg = make_start_message(g, (False, self.field_size, self.row_length))
         send_message(client2, msg_len, msg)
 
         clients = client1, client2

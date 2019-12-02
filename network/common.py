@@ -3,6 +3,7 @@ import json
 TYPE_FIELD = 1
 TYPE_MOVE = 2
 TYPE_GAME_OVER = 3
+TYPE_START = 4
 
 
 def make_message(type, payload):
